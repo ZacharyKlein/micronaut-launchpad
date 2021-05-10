@@ -1,0 +1,109 @@
+= Introduction
+
+[quote,  President John F. Kennedy,  Address at Rice University on the Nation's Space Effort, 1962]
+"We choose to [do these] things, not because they are easy, but because they are hard."
+
+Welcome, cadet!
+
+This book is designed to take you from 0-60 with the Micronaut framework, helping you get productive quickly, acclimated to best practices, while also giving you a grounding in the foundational principles that drive the framework and make it truly unique among its peers.
+
+With that in mind, this introduction is going to be a bit different than you might find in many tech books: we're going to hit the ground running by creating and bootstrapping a production-ready Micronaut app, including full code listings, and deploy it to the cloud. Along the way, we'll discuss what Micronaut has to offer to developers and organizations in today's cloud-native, highly-distributed environment.
+
+In later chapters, we will explore the features of the framework in much more detail, including testing, database access, streaming applications, and more.
+
+Note that if you prefer, it's perfectly acceptable to simply read along with this introductory section (all the code and relevant outputs will be listed here in the text),
+
+== Entry Exam
+
+Before we start, we will briefly list out the requirements that you'll want to have under your belt to get the most from this introduction (and the rest of the book):
+
+- Familiarity with Java, or a similar C-family programming language.
+- A properly configured Java Development Kit (JDK), version 8 or above.
+
+Believe it or not, that's really about it! If you have experience with frameworks like Spring Boot, Grails, or Quarkus, you'll find that useful, but we won't presume any of that in this book.
+
+== Readying the Launchpad
+
+To create your Micronaut app, the best place to start is the official Micronaut Launch website: https://micronaut.io/launch/[https://micronaut.io/launch]. This generator supports the creation of multiple types of applications, including Command Line Interface (CLI) apps, serverless functions (which we'll discuss in Chapter _), and more.
+
+[source]
+----
+Screenshot: Micronaut Launch
+----
+
+Let's get started by creating our first Micronaut app using the Launch website.
+
+=== Create/Download the project
+
+Browse to https://micronaut.io/launch/. Feel free to play around with some of the options, but this introduction, we will be using all the defaults (listed below for your reference), so be sure to refresh the page when you're ready to download your new project.
+
+- Application Type: Micronaut Application
+- Java Version: 11 (feel free to adjust this to match the JDK you want to use)
+- Base Package: `com.example`
+- Name: `demo`
+- Micronaut Version: Latest stable release (2.5.1 at the time of writing)
+- Language: Java
+- Build: Gradle
+- Test Framework: JUnit
+
+No additional features should be selected for this first project - no worries, we will get to play with many of them in future chapters!
+
+Before we download the project, click the "Preview" button to load the configured project in an embedded browser. This feature of Launch allows you to experiment with different combinations of settings/features and see in advance what the resulting project would look like.
+
+[source]
+----
+Screenshot: Micronaut Launch (Preview)
+----
+
+Once you've had a look around, dismiss the Preview window, and click the "Generate" button to download a ZIP file of your shiny new Micronaut project!
+
+=== Setting up a development environment
+
+We've chosen Gradle as our build tool for this project. Micronaut Launch can also generate Maven builds, and we'll use both tools in this book, but even if you're not familiar with Gradle, you won't have any trouble with this introduction. The downloaded project includes a "wrapper" script (`gradlew` for Unix systems, `gradlew.bat` for Windows) that will take care of downloading and installing the correct Gradle version for you.
+
+Because it uses standard build tools like Gradle and Maven, Micronaut doesn't require any particular IDE or plugins. For now, any IDE or text editor you are comfotable with will do - ideally one that provides good syntax highlighting for Java. We'll VSCode in the screenshots for this book.
+
+Unzip your project into a convenient directory, and open a terminal session (or command prompt in Windows) and navigate into the expanded project directory.
+
+Run the following command to verify your JDK is configured correctly:
+
+[source,bash]
+----
+~ java -version
+openjdk version "11.0.11" 2021-04-20
+OpenJDK Runtime Environment (build 11.0.11+9-Ubuntu-0ubuntu2.20.10)
+OpenJDK 64-Bit Server VM (build 11.0.11+9-Ubuntu-0ubuntu2.20.10, mixed mode, sharing)
+----
+
+If you don't get similar output (or if your Java version is older than 8), you may either consult the internet for guidance on installing the correct version of the JDK on your operating system, or check out the SDKMan package manager (https://sdkman.io/) and use it to install and switch between multiple JDK versions (as well as many other useful Java-based tools and frameworks, including Micronaut).
+
+If your JDK installation checks out, it's time to fire up the engines on our new Micronaut project! Run the following command:
+
+[source,bash]
+----
+~ ./gradlew run
+----
+
+If you're running on Windows, simply leave off the `./` before the name of the script.
+
+[source,bash]
+----
+~ gradlew run
+----
+
+If all goes well, you should see some output like below:
+
+[source,bash]
+----
+> Task :run
+ __  __ _                                  _
+|  \/  (_) ___ _ __ ___  _ __   __ _ _   _| |_
+| |\/| | |/ __| '__/ _ \| '_ \ / _` | | | | __|
+| |  | | | (__| | | (_) | | | | (_| | |_| | |_
+|_|  |_|_|\___|_|  \___/|_| |_|\__,_|\__,_|\__|
+  Micronaut (v2.5.1)
+
+20:49:37.191 [main] INFO  io.micronaut.runtime.Micronaut - Startup completed in 571ms. Server Running: http://localhost:8080
+
+----
+
