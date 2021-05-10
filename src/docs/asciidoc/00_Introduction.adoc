@@ -9,7 +9,7 @@ This book is designed to take you from 0-60 with the Micronaut framework, helpin
 
 With that in mind, this introduction is going to be a bit different than you might find in many tech books: we're going to hit the ground running by creating and bootstrapping a production-ready Micronaut app, including full code listings, and deploy it to the cloud. Along the way, we'll discuss what Micronaut has to offer to developers and organizations in today's cloud-native, highly-distributed environment.
 
-In later chapters, we will explore the features of the framework in much more detail, including testing, database access, streaming applications, and more.
+In later chapters, we will explore the features of the framework in much more detail, including testing, database access, streaming applications, using Micronaut with modern Single-Page Application UIs, and more.
 
 Note that if you prefer, it's perfectly acceptable to simply read along with this introductory section (all the code and relevant outputs will be listed here in the text),
 
@@ -61,7 +61,7 @@ Once you've had a look around, dismiss the Preview window, and click the "Genera
 
 We've chosen Gradle as our build tool for this project. Micronaut Launch can also generate Maven builds, and we'll use both tools in this book, but even if you're not familiar with Gradle, you won't have any trouble with this introduction. The downloaded project includes a "wrapper" script (`gradlew` for Unix systems, `gradlew.bat` for Windows) that will take care of downloading and installing the correct Gradle version for you.
 
-Because it uses standard build tools like Gradle and Maven, Micronaut doesn't require any particular IDE or plugins. For now, any IDE or text editor you are comfotable with will do - ideally one that provides good syntax highlighting for Java. We'll VSCode in the screenshots for this book.
+Because it uses standard build tools like Gradle and Maven, Micronaut doesn't require any particular IDE or plugins. For now, any IDE or text editor you are comfortable with will do - ideally one that provides good syntax highlighting for Java. We'll VSCode in the screenshots for this book.
 
 Unzip your project into a convenient directory, and open a terminal session (or command prompt in Windows) and navigate into the expanded project directory.
 
@@ -104,6 +104,41 @@ If all goes well, you should see some output like below:
   Micronaut (v2.5.1)
 
 20:49:37.191 [main] INFO  io.micronaut.runtime.Micronaut - Startup completed in 571ms. Server Running: http://localhost:8080
-
 ----
+
+Congratulations! Your first Micronaut application is primed and ready for launch!
+
+=== Creating your first controller
+
+At this point if you were to check out http://localhost:8080, you might be disappointed - it's not the most clever 404 page on the internet.
+
+[source]
+----
+{"message":"Page Not Found","_links":{"self":{"href":"/","templated":false}}}
+----
+
+Let's fix this by writing some code to return an obligatory greeting when we hit this URL.
+
+From within the expanded project directory, change to the subdirectory `src/main/java/com/example`, and create a new file named `HomeController.java`. If you're using an IDE, you can use the IDE's project browser to navigate to this directory and create the file.
+
+Add the following code to this new file.
+
+[source,java]
+----
+package com.example;
+
+import io.micronaut.http.*;
+
+@Controller
+public class HomeController {
+
+    @Get(produces = MediaType.TEXT_PLAIN)
+    public String hello() {
+        return "Hello World!";
+    }
+}
+----
+
+Depending on your familiarity with Java and MVC frameworks like Spring and Grails, this code might be extremely intuitive, or not. We'll dive deeply into controllers in Micronaut and the HTTP server capabilities of the framework later, but for now it's sufficient to understand that a controller is a piece of code that handles HTTP requests (like from our web browser).  One kind of HTTP request is the "GET" request (which is what happens when we load a URL in our browser), and in this code we are telling Micronaut to return a plain text string to "GET" requests to our application.
+
 
