@@ -121,7 +121,7 @@ Let's fix this by writing some code to return an obligatory greeting when we hit
 
 From within the expanded project directory, change to the subdirectory `src/main/java/com/example`, and create a new file named `HomeController.java`. If you're using an IDE, you can use the IDE's project browser to navigate to this directory and create the file.
 
-Add the following code to this new file.
+Add the following code to this new file:
 
 [source,java]
 ----
@@ -132,13 +132,78 @@ import io.micronaut.http.*;
 @Controller
 public class HomeController {
 
-    @Get(produces = MediaType.TEXT_PLAIN)
-    public String hello() {
-        return "Hello World!";
+    @Get(value = "/{name}", produces = MediaType.TEXT_PLAIN)
+    public String hello(String name) {
+        return "Hello " + name + "!";
     }
 }
 ----
 
 Depending on your familiarity with Java and MVC frameworks like Spring and Grails, this code might be extremely intuitive, or not. We'll dive deeply into controllers in Micronaut and the HTTP server capabilities of the framework later, but for now it's sufficient to understand that a controller is a piece of code that handles HTTP requests (like from our web browser).  One kind of HTTP request is the "GET" request (which is what happens when we load a URL in our browser), and in this code we are telling Micronaut to return a plain text string to "GET" requests to our application.
 
+This style of controller (or resource, in RESTspeak) is a well-established artifact in modern Java web frameworks. So what makes Micronaut controllers so special? The answer lies in what you _don't_ see in this code listing.
 
+=== Framework Magic
+
+Most Java developers don't really want to be writing code to create and receive HTTP requests, parse JSON, manually wire together dependent classes (or beans), create and manage database transactions, Of course, even in open source software,or any of the various boilerplate tasks that almost every application requires. For that reason, frameworks like Spring and libraries like Jackson exist to provide these features for "free", relying on various methods like code-generation, runtime reflection (inspecting your code at runtime and inserting additional behavior), and generating proxy classes that stand in "front" of your code and wrap it with additional functionality provided by the framework.
+
+As the saying goes, however, nothing is truly "free", and this applies to Java application frameworks as well.
+
+Take a look at our controller from above.
+
+[source,java]
+----
+@Controller
+public class HomeController {
+
+    @Get(value = "/{name}", produces = MediaType.TEXT_PLAIN)
+    public String hello(String name) {
+        return "Hello " + name + "!";
+    }
+}
+----
+
+While this is a trivial example, there is nonetheless a fair bit of complexity involved in actually creating a functioning HTTP endpoint like this. We need an HTTP server to accept requests, and we need to route the request to the correct method, extract the URL component/s and map them to arguments of the method, create the proper HTTP headers, and finally return the response. We also probably want this controller class to be instantiated for us when the application starts up, and we'd like it to be wired into a Dependency Injection container (more on this in a moment!), so that we can inject other beans into it (for example, a JDBC repository class, or a logging service).
+
+Any good Java framework will help you with these requirements, however, most will do this by _dynamically inspecting your code at runtime_ (either during the application startup, or "lazily" when a given class or method is invoked). Most often this involves a process called *reflection*, as mentioned above, wherein the framework will "crawl" your controller class (as well as any other application classes) and inspect each method and class member, usually *caching metadata about them as well and storing it in memory* (to speed up lookups later on).
+
+In short, reflection-based frameworks - including Spring - rely on a fairly expensive process to analyze and cache information about your code at runtime, which is then used to provide the framework's features to your application. It's a tradeoff which most developers are glad to make, in return for an expressive and productive programming model.
+
+=== The Problem with Reflection
+
+[image]
+----
+[Reflection]
+----
+
+The metadata gathered via reflection in a typical Spring application is surprisingly expansive. As mentioned above, every method and class member is inspected and cached, however, these caches are typically not shared between __, which means that the amount of memory consumed by these caches can be multiplied very easily. Even more problematic, the memory usage and runtime cost to reflection-based frameworks is tightly correlated to the size and complexity of the application code base - the more classes, methods, and inter-dependencies within the application, the more memory and time will be required in order for the framework to do its job.
+
+In a traditional monolithic Java application, these costs are usually easy to justify in return for the greater productivity and developer happiness offered by a well-designed framework. If you're running a single server and only restarting the app for the occasional release, throwing gigabytes of RAM and additional minutes of waiting for startup might be a reasonable compromise. However, in the era of microservices, serverless, cloud computing and PaaS providers, the calculus changes dramatically.
+
+=== The Micro Factor
+
+In a microservice architecture, it is not uncommon to have dozens or even hundreds of individual applications (or services) deployed in a cloud infrastructure. The runtime analysis and memory costs that were tolerable for a single monolith begin to scale up dramatically as the architecture grows and evolves, and given the lack of any practical mechanism to share reflective caches across JVM processes, organizations are faced with the unpleasant prospect of paying for (in some cases) the exact same metadata being collected and stored in memory for every service.
+
+The problem is exacerbated when we consider serverless applications (or "functions") using reflection-based frameworks. Most serverless platforms minimize costs by only launching the application when requests are received, and shutting it down after a set period of inactivity. This means that rapid time to first request is extremely valuable, for reasons of both performance and cost. For a serverless function to spend precious cycles during startup to inspect and generate the _same_ metadata repeatedly, is a non-starter (we cannot confirm or deny whether a pun may have been intended).
+
+The bottom line is that in a cloud-native system, the memory and startup time penalties incurred by reflection-based frameworks comprise a *direct, quantifiable cost* to organizations and projects. For this reason, many developers have concluded that JVM frameworks, despite their expressive and powerful programming model, are simply ill-suited for microservices and serverless applications, turning to alternate platforms like Go or Node.js.
+
+=== The JVM Strikes Back
+
+It's often said that the strength of Java is its ecosystem, and it's certainly the case that, for many organizations, walking away from the JVM as a platform is simply not a viable or desirable option.  Fortunately, the demands of cloud-native architecture are being met by exciting innovations, including GraalVM, an alternate JVM that creates "native images" which can run nearly as fast as an OS-native executable program, as well as a move away from reflection and towards compile-time analysis, aka *Ahead-Of-Time Compilation*.
+
+Micronaut applies the AOT approach to the problem of creating expressive, productive frameworks without relying on expensive and inefficient reflection. The genius of Micronaut is that, rather than do away with powerful features like DI, Aspect-Oriented Programming (AOP), transaction-management, etc, these features are implemented using *compile-time analysis of your code*.
+
+This means that the memory and analysis costs that you would otherwise incur at runtime _every time your app is launched_, are now paid only once, when the application is compiled. Once compiled, the metadata required by the framework, as well as any generated framework code, are baked into the bytecode of your deployable artifact (WAR or JAR file), requiring little to no runtime inspection when the application is launched.  What's more, as your app's codebase grows in size and/or complexity, there is no longer a linear correlation between code growth and memory/startup time cost - any additional cost simply happens when the app is compiled, while the runtime cost remains essentially fixed (and very low).
+
+[source,java]
+----
+@Controller
+public class HomeController {
+
+    @Get(value = "/{name}", produces = MediaType.TEXT_PLAIN)
+    public String hello(String name) {
+        return "Hello " + name + "!";
+    }
+}
+----
